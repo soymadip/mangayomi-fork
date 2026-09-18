@@ -9,7 +9,6 @@ import 'package:mangayomi/modules/anime/providers/anime_player_controller_provid
 import 'package:mangayomi/modules/anime/widgets/custom_seekbar.dart';
 import 'package:mangayomi/modules/anime/widgets/indicator_builder.dart';
 import 'package:mangayomi/modules/anime/widgets/subtitle_view.dart';
-import 'package:mangayomi/modules/manga/reader/providers/push_router.dart';
 import 'package:mangayomi/modules/more/settings/player/providers/player_state_provider.dart';
 import 'package:mangayomi/modules/anime/widgets/play_or_pause_button.dart';
 import 'package:volume_controller/volume_controller.dart';
@@ -28,6 +27,10 @@ class MobileControllerWidget extends ConsumerStatefulWidget {
   final ValueNotifier<List<(String, int)>> chapterMarks;
   // Bumped by the player on each d-pad key so the controls reveal on a TV remote.
   final ValueNotifier<int> revealControls;
+  /// Called when the user taps the previous-episode button in the primary bar.
+  final VoidCallback? onPreviousEpisode;
+  /// Called when the user taps the next-episode button in the primary bar.
+  final VoidCallback? onNextEpisode;
   const MobileControllerWidget({
     super.key,
     required this.videoController,
@@ -38,6 +41,8 @@ class MobileControllerWidget extends ConsumerStatefulWidget {
     required this.doubleSpeed,
     required this.chapterMarks,
     required this.revealControls,
+    this.onPreviousEpisode,
+    this.onNextEpisode,
   });
 
   @override
@@ -559,9 +564,10 @@ class _MobileControllerWidgetState
                                       child: Row(
                                         children: mobilePrimaryButtonBar(
                                           context,
-                                          widget.videoStatekey,
                                           widget.streamController,
                                           widget.videoController,
+                                          onPreviousEpisode: widget.onPreviousEpisode,
+                                          onNextEpisode: widget.onNextEpisode,
                                           playPauseFocus: _playPauseFocus,
                                         ),
                                       ),
@@ -1054,16 +1060,14 @@ class _ForwardSeekIndicatorState extends State<_ForwardSeekIndicator> {
 
 List<Widget> mobilePrimaryButtonBar(
   BuildContext context,
-  GlobalKey<VideoState> key,
   AnimeStreamController streamController,
   VideoController controller, {
+  VoidCallback? onPreviousEpisode,
+  VoidCallback? onNextEpisode,
   FocusNode? playPauseFocus,
 }) {
-  bool hasPrevEpisode =
-      streamController.getEpisodeIndex().$1 + 1 !=
-      streamController.getEpisodesLength(streamController.getEpisodeIndex().$2);
-  bool hasNextEpisode = streamController.getEpisodeIndex().$1 != 0;
-  final isFullScreen = isFullscreen(context);
+  final hasPrevEpisode = streamController.hasPreviousEpisode;
+  final hasNextEpisode = streamController.hasNextEpisode;
   return [
     const Spacer(flex: 3),
     IconButton.filledTonal(
@@ -1071,17 +1075,7 @@ List<Widget> mobilePrimaryButtonBar(
         backgroundColor: Colors.white.withValues(alpha: 0.15),
         disabledBackgroundColor: Colors.white.withValues(alpha: 0.05),
       ),
-      onPressed: hasPrevEpisode
-          ? () {
-              if (isFullScreen) {
-                key.currentState?.exitFullscreen();
-              }
-              pushReplacementMangaReaderView(
-                context: context,
-                chapter: streamController.getPrevEpisode(),
-              );
-            }
-          : null,
+      onPressed: hasPrevEpisode ? onPreviousEpisode : null,
       icon: Icon(
         Icons.skip_previous,
         size: 28,
@@ -1098,17 +1092,7 @@ List<Widget> mobilePrimaryButtonBar(
         backgroundColor: Colors.white.withValues(alpha: 0.15),
         disabledBackgroundColor: Colors.white.withValues(alpha: 0.05),
       ),
-      onPressed: hasNextEpisode
-          ? () {
-              if (isFullScreen) {
-                key.currentState?.exitFullscreen();
-              }
-              pushReplacementMangaReaderView(
-                context: context,
-                chapter: streamController.getNextEpisode(),
-              );
-            }
-          : null,
+      onPressed: hasNextEpisode ? onNextEpisode : null,
       icon: Icon(
         Icons.skip_next,
         size: 28,

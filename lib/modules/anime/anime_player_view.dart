@@ -1737,7 +1737,15 @@ mp.register_script_message('call_button_${button.id}_long', button${button.id}lo
     _subSpeedController.removeListener(_onSubSpeedChanged);
     _subSettingsSub?.close();
     WidgetsBinding.instance.removeObserver(this);
-    _setCurrentPosition(true, saveWatchTime: true);
+    // Only save position if the route exit handler hasn't already done so.
+    // During normal exit, _goBackToDetail() / pushToNewEpisode() call
+    // _setCurrentPosition() before retiring the video texture, so the
+    // _routeExitInProgress flag is already true here.  Saving again after
+    // teardown is both redundant and harmful: the player emits Duration.zero
+    // once stopped, which would overwrite the real saved position with 0.
+    if (!_routeExitInProgress) {
+      _setCurrentPosition(true, saveWatchTime: true);
+    }
     final playerCleanup = disposePlaybackSession(
       listenerCancellations: [
         _completed.cancel(),
@@ -2989,6 +2997,18 @@ mp.register_script_message('call_button_${button.id}_long', button${button.id}lo
                       _isDoubleSpeed.value = value ?? false;
                     },
                     chapterMarks: _chapterMarks,
+                    onPreviousEpisode: _streamController.hasPreviousEpisode
+                        ? () => pushToNewEpisode(
+                              context,
+                              _streamController.getPrevEpisode(),
+                            )
+                        : null,
+                    onNextEpisode: _streamController.hasNextEpisode
+                        ? () => pushToNewEpisode(
+                              context,
+                              _streamController.getNextEpisode(),
+                            )
+                        : null,
                   ),
             controller: _controller,
             // When docked left for the settings panel, fill the (narrower) slot
