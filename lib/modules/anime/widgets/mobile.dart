@@ -573,7 +573,7 @@ class _MobileControllerWidgetState
                                 alignment: Alignment.bottomCenter,
                                 children: [
                                   Padding(
-                                    padding: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.only(bottom: 22),
                                     child: CustomSeekBar(
                                       onSeekStart: (value) {
                                         setState(() {
@@ -620,7 +620,7 @@ class _MobileControllerWidgetState
                         alignment: Alignment.bottomCenter,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.only(bottom: 22),
                             child: CustomSeekBar(
                               delta: _seekBarDeltaValueNotifier,
                               player: widget.videoController.player,
